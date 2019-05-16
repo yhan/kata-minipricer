@@ -9,29 +9,60 @@ namespace MiniPricerKata
     public class MiniPricerShould
     {
         [Test]
-        public void Can_do_simple_extrapolation_Given_one_day_volatility()
-        {
-            double volatility = 1;
-            var prices = MiniPricer.Extrapolate(initialPrice: 42, volatilitySeries: new double[] {0, volatility});
-            Check.That(prices).ContainsExactly(42, 42 * (1 + volatility / 100));
-        }
-
-        
-        [Test]
         public void Can_do_simple_extrapolation_Given_two_days_volatility_series()
         {
-            double volatilityD1 = 1;
-            double volatilityD2 = 2;
-            var prices = MiniPricer.Extrapolate(initialPrice: 42, volatilitySeries: new double[] {0, volatilityD1, volatilityD2});
-            Check.That(prices).ContainsExactly(42, 42 * (1 + volatilityD1 / 100), 42 * (1 + volatilityD2 / 100));
+            var volatilityD0 = new Volatility(0);
+            var volatilityD1 = new Volatility(1);
+            var volatilityD2 = new Volatility(2);
+            var date = new DateTime(1900, 1, 1);
+            
+            var miniPricer = new MiniPricer(new Price(date, 42 ));
+            var prices = miniPricer.Extrapolate(volatilitySeries: new [] {volatilityD0, volatilityD1, volatilityD2} );
+
+            Check.That(prices).ContainsExactly(
+                new Price[]
+                {
+                    new Price(date, 42), 
+                    new Price(date.AddDays(1), 42 * (1 + volatilityD1.Value / 100)),
+                    new Price(date.AddDays(2), 42 * (1 + volatilityD2.Value / 100))
+                } );
         }
     }
 
     public class MiniPricer
     {
-        public static IEnumerable<double> Extrapolate(double initialPrice, double[] volatilitySeries)
+        private readonly Price _knownPrice;
+
+        public MiniPricer(Price knownPrice)
         {
-            return volatilitySeries.Select(x => initialPrice * (1 + x / 100));
+            _knownPrice = knownPrice;
+        }
+
+        public IEnumerable<Price> Extrapolate(Volatility[] volatilitySeries)
+        {
+            return volatilitySeries.Select((volatility, offset) => new Price(_knownPrice.Date.AddDays(offset), _knownPrice.Value * (1 + volatility.Value / 100)));
+        }
+    }
+
+    public struct Volatility
+    {
+        public double Value { get; }
+
+        public Volatility(double value)
+        {
+            Value = value;
+        }
+    }
+
+    public struct Price
+    {
+        public DateTime Date { get; }
+        public double Value { get; }
+
+        public Price(DateTime date, double value)
+        {
+            Date = date;
+            Value = value;
         }
     }
 }
