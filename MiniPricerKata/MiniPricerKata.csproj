@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="MiniPricerKata.v3.ncrunchproject" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="nfluent" Version="2.5.0" />
     <PackageReference Include="nunit" Version="3.12.0" />
   </ItemGroup>

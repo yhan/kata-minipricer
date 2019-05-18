@@ -6,19 +6,27 @@ namespace MiniPricerKata.Impl2
     {
         private readonly Price _initialPrice;
         private readonly IProvideJoursFeries _joursFeriesProvider;
+        private readonly IRandomizeVolatility _priceMoveTrendProvider;
         private readonly Volatility _volatility;
 
-        public MiniPricer2(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider)
+        public MiniPricer2(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider,
+            IRandomizeVolatility priceMoveTrendProvider)
         {
             _initialPrice = initialPrice;
             _volatility = volatility;
             _joursFeriesProvider = joursFeriesProvider;
+            _priceMoveTrendProvider = priceMoveTrendProvider;
+        }
+
+        public MiniPricer2(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider)
+            : this(initialPrice, volatility, joursFeriesProvider, new VolatilityRandomizer())
+        {
+            
         }
 
         public Price GetPriceOf(DateTime date)
         {
             var numberOfDays = date.Subtract(_initialPrice.Date).Days;
-            var volatility = _volatility.Value;
 
             var price = _initialPrice.Value;
 
@@ -26,10 +34,14 @@ namespace MiniPricerKata.Impl2
             {
                 var currentDate = _initialPrice.Date.AddDays(offset);
 
-                volatility = _volatility.Value;
+                var volatility = _volatility.Value;
                 if (IsWeekend(currentDate) || IsJourFerie(currentDate))
                 {
                     volatility = 0;
+                }
+                else
+                {
+                    volatility = (int) _priceMoveTrendProvider.Randomrize(volatility);
                 }
 
                 price = price * (1 + volatility / 100);
