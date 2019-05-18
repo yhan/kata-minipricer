@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using NFluent;
 using NUnit.Framework;
 
@@ -8,50 +10,49 @@ namespace MiniPricerKata
 {
     public class MiniPricerShould
     {
-        //[Test]
-        //public void Can_do_simple_extrapolation_Given_two_days_volatility_series()
-        //{
-        //    var volatility4m30 = new Volatility(0);//4/30
-        //    var volatility5m1 = new Volatility(1);//1
-        //    var volatility5m2 = new Volatility(2);//2
-        //    var volatility5m3 = new Volatility(3);//1
-        //    var volatility5m4 = new Volatility(42);//1
-        //    var volatility5m5 = new Volatility(142);//1
-        //    var volatility5m8 = new Volatility(999);//1
-        //    var date = new DateTime(2019, 4, 30);//1 4 5 8
-            
-        //    var miniPricer = new MiniPricer(new Price(date, 42 ));
-        //    var prices = miniPricer.Extrapolate(volatilitySeries: new [] {volatility4m30, volatility5m1, volatility5m2,volatility5m3, volatility5m4, volatility5m5, volatility5m8  } );
 
-        //    Check.That(prices).ContainsExactly(
-        //        new Price[]
-        //        {
-        //            new Price(date, 42), 
-        //            new Price(date.AddDays(1), 42),
-        //            new Price(date.AddDays(2), 42 * (1 + volatility5m2.Value / 100))
-        //        } );
-        //}
+        private static DateTime Make(int year, int month, int day)
+        {
+            return new DateTime(year, month, day);
+        }
 
         [Test]
         public void Can_do_simple_extrapolation_Given_two_days_volatility_series()
         {
-            var volatilityD0 = new Volatility(0);
-            var volatilityD1 = new Volatility(1);
-            var volatilityD2 = new Volatility(2);
-            var date = new DateTime(1900, 1, 1);
-            
-            var miniPricer = new MiniPricer(new Price(date, 42 ));
-            var prices = miniPricer.Extrapolate(volatilitySeries: new [] {volatilityD0, volatilityD1, volatilityD2} ).ToArray();
+            var volatility4M30 = new Volatility(0, Make(2019, 4, 30));//4/30
+            var volatility5M1 = new Volatility(1,  Make(2019,5,1));//5/1
+            var volatility5M2 = new Volatility(2  , Make(2019,5,2) );
+            var volatility5M3 = new Volatility(3  , Make(2019,5,3) );
+            var volatility5M4 = new Volatility(42 , Make(2019,5,4)  );//5/4
+            var volatility5M5 = new Volatility(142, Make(2019,5,5)   );//5/5
+            var volatility5M6 = new Volatility(4  , Make(2019,5,6)  );//5/6
+            var volatility5M7 = new Volatility(5  , Make(2019,5,7)  );//5/7
+            var volatility5M8 = new Volatility(999, Make(2019,5,8)    );//5/8
+            var date = new DateTime(2019, 4, 30);//1 4 5 8
 
-            var d1Price = 42 * (1 + volatilityD1.Value / 100);
-            var d2Price = d1Price * (1 + volatilityD2.Value / 100);
+            var miniPricer = new MiniPricer(new Price(date, 42));
+            var prices = miniPricer.Extrapolate(volatilitySeries: new[] { volatility4M30,
+                volatility5M1, volatility5M2, volatility5M3,
+                volatility5M4, volatility5M5, 
+                volatility5M6, volatility5M7,
+                volatility5M8
+            }).ToArray();
+
+
+
             Check.That(prices).ContainsExactly(
                 new Price[]
                 {
-                    new Price(date, 42), 
-                    new Price(date.AddDays(1), d1Price),
-                    new Price(date.AddDays(2), d2Price)
-                } );
+                    new Price(date, 42),
+                    new Price(date.AddDays(1), 42),
+                    new Price(date.AddDays(2), 42 * (1 + volatility5M2.Value / 100)),
+                    new Price(date.AddDays(3), 42 * (1 + volatility5M2.Value / 100)* (1 + volatility5M3.Value / 100)),
+                    new Price(date.AddDays(4), 42 * (1 + volatility5M2.Value / 100)* (1 + volatility5M3.Value / 100)),
+                    new Price(date.AddDays(5), 42 * (1 + volatility5M2.Value / 100)* (1 + volatility5M3.Value / 100)),
+                    new Price(date.AddDays(6), 42 * (1 + volatility5M2.Value / 100)* (1 + volatility5M3.Value / 100)* (1 + volatility5M6.Value / 100)),
+                    new Price(date.AddDays(7), 42 * (1 + volatility5M2.Value / 100)* (1 + volatility5M3.Value / 100)* (1 + volatility5M6.Value / 100)* (1 + volatility5M7.Value / 100)),
+                    new Price(date.AddDays(8), 42 * (1 + volatility5M2.Value / 100)* (1 + volatility5M3.Value / 100)* (1 + volatility5M6.Value / 100)* (1 + volatility5M7.Value / 100))
+                });
         }
     }
 
@@ -70,8 +71,9 @@ namespace MiniPricerKata
 
             return volatilitySeries.Select((volatility, offset) =>
             {
+                var date = _knownPrice.Date.AddDays(offset);
                 
-                var price = new Price(_knownPrice.Date.AddDays(offset), current.Value * (1 + volatility.Value / 100));
+                var price = new Price(date, current.Value * (1 + volatility.Value / 100));
                 current = price;
 
                 return price;
@@ -79,16 +81,29 @@ namespace MiniPricerKata
         }
     }
 
+
     public struct Volatility
     {
+        private static readonly HashSet<DateTime> Feries = new HashSet<DateTime>{new DateTime(2019, 5, 1), new DateTime(2019, 5, 5), new DateTime(2019, 5, 8)};
+
         public double Value { get; }
+        public DateTime Date { get; }
 
-        public Volatility(double value)
+        public Volatility(double value, DateTime date)
         {
-            Value = value;
+            Date = date;
+            
+         
+            Value = Date.DayOfWeek == DayOfWeek.Saturday || Date.DayOfWeek == DayOfWeek.Sunday ||
+                   Feries.Contains(date)
+                ? 0
+                : value;
+                
         }
-    }
+        
 
+    }
+    [DebuggerDisplay("{Date:yyyy-MM-dd)} {Value}")]
     public struct Price
     {
         public DateTime Date { get; }
@@ -97,7 +112,12 @@ namespace MiniPricerKata
         public Price(DateTime date, double value)
         {
             Date = date;
-            Value = value; 
+            Value = value;
+        }
+
+        public override string ToString()
+        {
+            return $"{this.Date:yyyy-MM-dd} {this.Value}";
         }
     }
 }
