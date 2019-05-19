@@ -37,12 +37,10 @@ namespace MiniPricerKata.Impl2
                 var volatility = _volatility.Value;
                 if (IsWeekend(currentDate) || IsJourFerie(currentDate))
                 {
-                    volatility = 0;
+                    continue;
                 }
-                else
-                {
-                    volatility = (int) _priceMoveTrendProvider.Randomrize(volatility);
-                }
+
+                volatility = (int) _priceMoveTrendProvider.Randomrize(volatility);
 
                 price = price * (1 + volatility / 100);
             }

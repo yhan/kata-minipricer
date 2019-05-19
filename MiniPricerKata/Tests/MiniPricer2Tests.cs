@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using MiniPricerKata.Impl1;
 using MiniPricerKata.Impl2;
 using NFluent;
@@ -7,7 +10,7 @@ using NUnit.Framework;
 
 namespace MiniPricerKata.Tests
 {
-    public class PricerTests
+    public class MiniPricer2Tests
     {
         private const int InitialPrice = 100;
         private static readonly Volatility Volatility = new Volatility(20);
@@ -73,10 +76,10 @@ namespace MiniPricerKata.Tests
             Check.That(jf1.Value).IsEqualTo(InitialPrice);
 
             var jf2 = pricer.GetPriceOf(new DateTime(2019, 5, 5));
-            Check.That(jf2.Value).IsEqualTo(InitialPrice * Math.Pow((InitialPrice + Volatility.Value)/InitialPrice, 2)); // 2 3 4(saturday)
+            Check.That(jf2.Value).IsEqualTo(InitialPrice * Math.Pow((InitialPrice + Volatility.Value) / InitialPrice, 2)); // 2 3 4(saturday)
 
             var jf3 = pricer.GetPriceOf(new DateTime(2019, 5, 8));
-            Check.That(jf3.Value).IsEqualTo(InitialPrice * Math.Pow((InitialPrice + Volatility.Value)/InitialPrice, 4));
+            Check.That(jf3.Value).IsEqualTo(InitialPrice * Math.Pow((InitialPrice + Volatility.Value) / InitialPrice, 4));
         }
 
 
@@ -100,11 +103,11 @@ namespace MiniPricerKata.Tests
             Check.That(volatilityRandomizer.CalledTimes).IsEqualTo(randomrizeCalledTimes);
         }
 
-        
+
         [Test]
         public void Should_randomize_volatility_to_absoluteValue_or_negativeValue_or_zero()
         {
-       
+
             var date = new DateTime(2019, 5, 1);
             var volatilityRandomizer = new VolatilityRandomizerTestDecorator();
             var pricer = new MiniPricer2(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer);
@@ -113,9 +116,57 @@ namespace MiniPricerKata.Tests
 
             var volatilities = volatilityRandomizer.Volatilities;
             Check.That(volatilities.All(v => Math.Abs(Math.Abs(v) - InitialPrice) < 0.000000001));
-            Assert.That(volatilities.Any(v=> v < 0), Is.True, "Should have negative volatility");
-            Assert.That(volatilities.Any(v=> v > 0), Is.True, "Should have posivite volatility");
-            Assert.That(volatilities.Any(v=> v == 0), Is.True, "Should have null volatility");
+            Assert.That(volatilities.Any(v => v < 0), Is.True, "Should have negative volatility");
+            Assert.That(volatilities.Any(v => v > 0), Is.True, "Should have posivite volatility");
+            Assert.That(volatilities.Any(v => v == 0), Is.True, "Should have null volatility");
+        }
+
+        [Test]
+        public void Can_apply_random_volatility_using_monte_carlo_algo()
+        {
+            var date = new DateTime(2019, 5, 5);
+            var nextDate = date.AddDays(1);
+
+            var queue = new Queue<double>();
+            queue.Enqueue(20);
+            queue.Enqueue(4);
+            queue.Enqueue(30);
+
+            Func<double, double> volatilityProducer = d => queue.Dequeue();
+
+            var volatilityRandomizer = new MonteCarloVolatilityRandomizer(3, Volatility, volatilityProducer);
+            var pricer = new MiniPricer2(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer);
+
+            var priceOfNextDate = pricer.GetPriceOf(nextDate);
+
+            Check.That(priceOfNextDate).IsEqualTo(new Price(nextDate, 100 * (1 + (20d + 4 + 30) / 3 / 100)));
+        }
+
+        [Test]
+        public void Should_get_correct_price_range_When_apply_monte_carlo_algo()
+        {
+            var date = new DateTime(2019, 5, 5);
+            var nextDate = date.AddDays(1);
+            int largeNumber = 10000;
+
+            int randomingCount = 0;
+            Func<double, double> producer = d =>
+            {
+                var volatilityRandomizer = new VolatilityRandomizer();
+                Interlocked.Increment(ref randomingCount);
+                return volatilityRandomizer.Randomrize(Volatility.Value);
+            };
+
+            var monteCarlo = new MonteCarloVolatilityRandomizer(largeNumber, Volatility, producer);
+
+            var pricer = new MiniPricer2(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), monteCarlo);
+
+            var priceOfNextDay = pricer.GetPriceOf(nextDate);
+
+            Check.That(randomingCount).IsEqualTo(largeNumber);
+            Check.That(priceOfNextDay.Date).IsEqualTo(nextDate);
+            Check.That(priceOfNextDay.Value).IsStrictlyLessThan(120);
+            Check.That(priceOfNextDay.Value).IsStrictlyGreaterThan(80);
         }
     }
 }
