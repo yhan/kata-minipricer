@@ -26,7 +26,7 @@ namespace MiniPricerKata.Tests
 
             var priceOf20190508 = pricer.GetPriceOf(date);
 
-            Check.That(priceOf20190508).IsEqualTo(new Price(date, 100));
+            Check.That(priceOf20190508).IsEqualTo(new Price(date, InitialPrice));
         }
 
 
@@ -39,7 +39,7 @@ namespace MiniPricerKata.Tests
 
             var priceOf20190508 = pricer.GetPriceOf(tomorrow);
 
-            Check.That(priceOf20190508).IsEqualTo(new Price(tomorrow, 120));
+            Check.That(priceOf20190508).IsEqualTo(new Price(tomorrow, InitialPrice + Volatility.Value));
         }
 
 
@@ -56,10 +56,10 @@ namespace MiniPricerKata.Tests
             var sunday = saturday.AddDays(1);
 
             var priceOfSaturday = pricer.GetPriceOf(saturday);
-            Check.That(priceOfSaturday.Value).IsEqualTo(120);
+            Check.That(priceOfSaturday.Value).IsEqualTo(InitialPrice + Volatility.Value);
 
             var priceOfSunday = pricer.GetPriceOf(sunday);
-            Check.That(priceOfSunday.Value).IsEqualTo(120);
+            Check.That(priceOfSunday.Value).IsEqualTo(InitialPrice + Volatility.Value);
         }
 
 
@@ -70,13 +70,13 @@ namespace MiniPricerKata.Tests
             var pricer = new MiniPricer2(new Price(initialDate, InitialPrice), Volatility, new JoursFeriesProvider(), new VolatilityRandomizerForTesting());
 
             var jf1 = pricer.GetPriceOf(new DateTime(2019, 5, 1));
-            Check.That(jf1.Value).IsEqualTo(100);
+            Check.That(jf1.Value).IsEqualTo(InitialPrice);
 
             var jf2 = pricer.GetPriceOf(new DateTime(2019, 5, 5));
-            Check.That(jf2.Value).IsEqualTo(100 * Math.Pow(1.2, 2)); // 2 3 4(saturday)
+            Check.That(jf2.Value).IsEqualTo(InitialPrice * Math.Pow((InitialPrice + Volatility.Value)/InitialPrice, 2)); // 2 3 4(saturday)
 
             var jf3 = pricer.GetPriceOf(new DateTime(2019, 5, 8));
-            Check.That(jf3.Value).IsEqualTo(100 * Math.Pow(1.2, 4));
+            Check.That(jf3.Value).IsEqualTo(InitialPrice * Math.Pow((InitialPrice + Volatility.Value)/InitialPrice, 4));
         }
 
 
