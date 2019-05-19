@@ -132,7 +132,7 @@ namespace MiniPricerKata.Tests
             queue.Enqueue(4);
             queue.Enqueue(30);
 
-            Func<double, double> volatilityProducer = d => queue.Dequeue();
+            Func<Volatility, Volatility> volatilityProducer = d => new Volatility(queue.Dequeue());
 
             var volatilityRandomizer = new MonteCarloVolatilityRandomizer(3, Volatility, volatilityProducer);
             var pricer = new MiniPricer2(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer);
@@ -150,11 +150,11 @@ namespace MiniPricerKata.Tests
             int largeNumber = 10000;
 
             int randomingCount = 0;
-            Func<double, double> producer = d =>
+            Func<Volatility, Volatility> producer = d =>
             {
                 var volatilityRandomizer = new VolatilityRandomizer();
                 Interlocked.Increment(ref randomingCount);
-                return volatilityRandomizer.Randomrize(Volatility.Value);
+                return volatilityRandomizer.Randomrize(Volatility);
             };
 
             var monteCarlo = new MonteCarloVolatilityRandomizer(largeNumber, Volatility, producer);

@@ -4,11 +4,11 @@ namespace MiniPricerKata.Impl2
 {
     class VolatilityRandomizer : IRandomizeVolatility
     {
-        private static Random _random = new Random();
+        private static readonly Random Random = new Random();
 
-        public double Randomrize(double volatility)
+        public Volatility Randomrize(Volatility volatility)
         {
-            var next = _random.Next(3);
+            var next = Random.Next(3);
             int sign;
             switch ((PriceMoveTrend)next)
             {
@@ -25,7 +25,7 @@ namespace MiniPricerKata.Impl2
                     throw new ArgumentOutOfRangeException();
             }
 
-            return volatility * sign;
+            return new Volatility(volatility.Value * sign);
         }
     }
 }

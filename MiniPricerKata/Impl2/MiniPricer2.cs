@@ -34,15 +34,15 @@ namespace MiniPricerKata.Impl2
             {
                 var currentDate = _initialPrice.Date.AddDays(offset);
 
-                var volatility = _volatility.Value;
+                var volatility = _volatility;
                 if (IsWeekend(currentDate) || IsJourFerie(currentDate))
                 {
                     continue;
                 }
 
-                volatility = (int) _priceMoveTrendProvider.Randomrize(volatility);
+                volatility =  _priceMoveTrendProvider.Randomrize(volatility);
 
-                price = price * (1 + volatility / 100);
+                price = price * (1 + volatility.Value / 100);
             }
 
             return new Price(date, price);

@@ -8,21 +8,21 @@ namespace MiniPricerKata.Impl2
     {
         private readonly int _largeNumber;
         private readonly Volatility _volatilitySeed;
-        private readonly Func<double, double> _volatilityProducer;
+        private readonly Func<Volatility, Volatility> _volatilityProducer;
 
-        public MonteCarloVolatilityRandomizer(int largeNumber, Volatility volatilitySeed,  Func<double, double> volatilityProducer)
+        public MonteCarloVolatilityRandomizer(int largeNumber, Volatility volatilitySeed,  Func<Volatility, Volatility> volatilityProducer)
         {
             _largeNumber = largeNumber;
             _volatilitySeed = volatilitySeed;
             _volatilityProducer = volatilityProducer;
         }
 
-        public double Randomrize(double volatility)
+        public Volatility Randomrize(Volatility volatility)
         {
             var buffer = new double[_largeNumber];
-            Parallel.For(0, _largeNumber, x => { buffer[x] = _volatilityProducer(_volatilitySeed.Value); });
+            Parallel.For(0, _largeNumber, x => { buffer[x] = _volatilityProducer(_volatilitySeed).Value; });
 
-            return buffer.Sum() / _largeNumber;
+            return new Volatility(buffer.Sum() / _largeNumber);
         }
     }
 }

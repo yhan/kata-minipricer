@@ -7,7 +7,7 @@ namespace MiniPricerKata.Tests
         private int _calledTimes;
         public int CalledTimes => _calledTimes;
 
-        public double Randomrize(double volatility)
+        public Volatility Randomrize(Volatility volatility)
         {
             _calledTimes++;
             return volatility;

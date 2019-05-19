@@ -12,11 +12,11 @@ namespace MiniPricerKata.Tests
             _innerRandomrizer = new VolatilityRandomizer();
         }
 
-        public double Randomrize(double volatility)
+        public Volatility Randomrize(Volatility volatility)
         {
             var randomrizedVolatility = _innerRandomrizer.Randomrize(volatility);
 
-            _volatilities.Add(randomrizedVolatility);
+            _volatilities.Add(randomrizedVolatility.Value);
             
             return volatility;
         }
