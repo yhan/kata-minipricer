@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using MiniPricerKata.Impl2;
+using MiniPricerKata.Tests;
 
 namespace MiniPricerKata
 {
@@ -18,6 +20,12 @@ namespace MiniPricerKata
         public override string ToString()
         {
             return $"{Date:yyyy-MM-dd} {Value}";
+        }
+
+        public static Price operator * (Price price, Correlation correlation)
+        {
+            var correlatedPrice = price.Value * correlation.Value;
+            return new Price(price.Date, correlatedPrice);
         }
     }
 }

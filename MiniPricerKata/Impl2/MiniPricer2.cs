@@ -1,4 +1,5 @@
 ﻿using System;
+using MiniPricerKata.Tests;
 
 namespace MiniPricerKata.Impl2
 {
@@ -8,23 +9,35 @@ namespace MiniPricerKata.Impl2
         private readonly IProvideJoursFeries _joursFeriesProvider;
         private readonly IRandomizeVolatility _priceMoveTrendProvider;
         private readonly Volatility _volatility;
+        private Basket _basket;
 
-        public MiniPricer2(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider,
-            IRandomizeVolatility priceMoveTrendProvider)
+        public MiniPricer2(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider, 
+            IRandomizeVolatility priceMoveTrendProvider, Basket basket)
         {
             _initialPrice = initialPrice;
             _volatility = volatility;
             _joursFeriesProvider = joursFeriesProvider;
             _priceMoveTrendProvider = priceMoveTrendProvider;
+            _basket = basket;
         }
 
-        public MiniPricer2(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider)
-            : this(initialPrice, volatility, joursFeriesProvider, new VolatilityRandomizer())
+        public MiniPricer2(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider,
+            IRandomizeVolatility priceMoveTrendProvider) : this(initialPrice, volatility, joursFeriesProvider, priceMoveTrendProvider,  new EmptyBasket())
         {
-            
+
+        }
+        
+        public Price GetPriceOf(Instrument instrument, DateTime date)
+        {
+            if (_basket.IsEmpty())
+            {
+                return InnerPriceOf(date);
+            }
+
+            throw new ArgumentException("Instrument is in a basket");
         }
 
-        public Price GetPriceOf(DateTime date)
+        private Price InnerPriceOf(DateTime date)
         {
             var numberOfDays = date.Subtract(_initialPrice.Date).Days;
 
@@ -40,12 +53,19 @@ namespace MiniPricerKata.Impl2
                     continue;
                 }
 
-                volatility =  _priceMoveTrendProvider.Randomrize(volatility);
+                volatility = _priceMoveTrendProvider.Randomrize(volatility);
 
                 price = price * (1 + volatility.Value / 100);
             }
 
             return new Price(date, price);
+        }
+
+        public BasketPriceComposition GetPriceOf(DateTime date, Basket basket)
+        {
+            var pivotPrice = InnerPriceOf(date);
+
+            return new BasketPriceComposition(_basket, pivotPrice);
         }
 
         private bool IsJourFerie(DateTime date)
