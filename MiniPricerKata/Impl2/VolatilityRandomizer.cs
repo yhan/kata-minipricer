@@ -8,7 +8,7 @@ namespace MiniPricerKata.Impl2
 
         public Volatility Randomrize(Volatility volatility)
         {
-            var next = Random.Next(3);
+            var next = Random.Next(maxValue: 3);
             int sign;
             switch ((PriceMoveTrend)next)
             {
