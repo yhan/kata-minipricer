@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MiniPricerKata.Impl2
+namespace MiniPricerKata
 {
     class VolatilityRandomizer : IRandomizeVolatility
     {

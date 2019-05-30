@@ -1,9 +1,8 @@
 ﻿using System;
-using MiniPricerKata.Tests;
 
-namespace MiniPricerKata.Impl2
+namespace MiniPricerKata
 {
-    public class MiniPricer2
+    public class MiniPricer
     {
         private readonly Price _initialPrice;
         private readonly IProvideJoursFeries _joursFeriesProvider;
@@ -11,7 +10,7 @@ namespace MiniPricerKata.Impl2
         private readonly Volatility _volatility;
         private Basket _basket;
 
-        public MiniPricer2(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider, 
+        public MiniPricer(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider, 
             IRandomizeVolatility priceMoveTrendProvider, Basket basket)
         {
             _initialPrice = initialPrice;
@@ -21,7 +20,7 @@ namespace MiniPricerKata.Impl2
             _basket = basket;
         }
 
-        public MiniPricer2(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider,
+        public MiniPricer(Price initialPrice, Volatility volatility, IProvideJoursFeries joursFeriesProvider,
             IRandomizeVolatility priceMoveTrendProvider) : this(initialPrice, volatility, joursFeriesProvider, priceMoveTrendProvider,  new EmptyBasket())
         {
 

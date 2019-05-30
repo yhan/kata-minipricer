@@ -1,4 +1,4 @@
-﻿namespace MiniPricerKata.Impl2
+﻿namespace MiniPricerKata
 {
     public enum PriceMoveTrend
     {

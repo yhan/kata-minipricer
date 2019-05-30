@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using MiniPricerKata.Impl2;
 using MiniPricerKata.Tests;
 
 namespace MiniPricerKata

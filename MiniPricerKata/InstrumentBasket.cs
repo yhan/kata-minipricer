@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace MiniPricerKata.Impl2
+namespace MiniPricerKata
 {
     public class InstrumentBasket : Basket
     {

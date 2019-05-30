@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using MiniPricerKata.Impl2;
 
 namespace MiniPricerKata.Tests
 {

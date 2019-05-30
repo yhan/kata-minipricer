@@ -1,6 +1,4 @@
-﻿using MiniPricerKata.Impl2;
-
-namespace MiniPricerKata.Tests
+﻿namespace MiniPricerKata.Tests
 {
     public class VolatilityRandomizerForTesting : IRandomizeVolatility
     {

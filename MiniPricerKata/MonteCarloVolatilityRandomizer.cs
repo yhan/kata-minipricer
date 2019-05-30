@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MiniPricerKata.Impl2
+namespace MiniPricerKata
 {
     public class MonteCarloVolatilityRandomizer : IRandomizeVolatility
     {

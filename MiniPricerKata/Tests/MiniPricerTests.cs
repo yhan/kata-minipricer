@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
-using MiniPricerKata.Impl2;
 using NFluent;
-using NSubstitute;
 using NUnit.Framework;
 
 namespace MiniPricerKata.Tests
 {
-    public class MiniPricer2Tests
+    public class MiniPricerTests
     {
         private const int InitialPrice = 100;
         private static readonly Volatility Volatility = new Volatility(20);
@@ -24,16 +21,16 @@ namespace MiniPricerKata.Tests
         protected internal DateTime D20190508 = new DateTime(2019, 5, 8);
 
 
-        private static Instrument _instrument = new Instrument("FAKE.L");
+        private static readonly Instrument Instrument = new Instrument("FAKE.L");
 
         [Test]
         public void Should_return_current_price_When_requested_date_is_current_date()
         {
             var date = D20190430;
 
-            var pricer = new MiniPricer2(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), new VolatilityRandomizerForTesting());
+            var pricer = new MiniPricer(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), new VolatilityRandomizerForTesting());
 
-            var priceOf20190508 = pricer.GetPriceOf(_instrument, date);
+            var priceOf20190508 = pricer.GetPriceOf(Instrument, date);
 
             Check.That(priceOf20190508).IsEqualTo(new Price(date, InitialPrice));
         }
@@ -44,9 +41,9 @@ namespace MiniPricerKata.Tests
         {
             var today = D20190501;
             var tomorrow = D20190502;
-            var pricer = new MiniPricer2(new Price(today, InitialPrice), Volatility, new JoursFeriesProvider(), new VolatilityRandomizerForTesting());
+            var pricer = new MiniPricer(new Price(today, InitialPrice), Volatility, new JoursFeriesProvider(), new VolatilityRandomizerForTesting());
 
-            var priceOf20190508 = pricer.GetPriceOf(_instrument, tomorrow);
+            var priceOf20190508 = pricer.GetPriceOf(Instrument, tomorrow);
 
             Check.That(priceOf20190508).IsEqualTo(new Price(tomorrow, InitialPrice + Volatility.Value));
         }
@@ -57,17 +54,17 @@ namespace MiniPricerKata.Tests
         {
             var initialDate = D20190502;
 
-            var pricer = new MiniPricer2(new Price(initialDate, InitialPrice), Volatility, new JoursFeriesProvider(), new VolatilityRandomizerForTesting());
+            var pricer = new MiniPricer(new Price(initialDate, InitialPrice), Volatility, new JoursFeriesProvider(), new VolatilityRandomizerForTesting());
 
             var friday = D20190503;
 
             var saturday = friday.AddDays(1);
             var sunday = saturday.AddDays(1);
 
-            var priceOfSaturday = pricer.GetPriceOf(_instrument, saturday);
+            var priceOfSaturday = pricer.GetPriceOf(Instrument, saturday);
             Check.That(priceOfSaturday.Value).IsEqualTo(InitialPrice + Volatility.Value);
 
-            var priceOfSunday = pricer.GetPriceOf(_instrument, sunday);
+            var priceOfSunday = pricer.GetPriceOf(Instrument, sunday);
             Check.That(priceOfSunday.Value).IsEqualTo(InitialPrice + Volatility.Value);
         }
 
@@ -76,15 +73,15 @@ namespace MiniPricerKata.Tests
         public void Should_not_apply_volatility_on_jours_feries()
         {
             var initialDate = D20190430;
-            var pricer = new MiniPricer2(new Price(initialDate, InitialPrice), Volatility, new JoursFeriesProvider(), new VolatilityRandomizerForTesting());
+            var pricer = new MiniPricer(new Price(initialDate, InitialPrice), Volatility, new JoursFeriesProvider(), new VolatilityRandomizerForTesting());
 
-            var jf1 = pricer.GetPriceOf(_instrument, D20190501);
+            var jf1 = pricer.GetPriceOf(Instrument, D20190501);
             Check.That(jf1.Value).IsEqualTo(InitialPrice);
 
-            var jf2 = pricer.GetPriceOf(_instrument, D20190505);
+            var jf2 = pricer.GetPriceOf(Instrument, D20190505);
             Check.That(jf2.Value).IsEqualTo(InitialPrice * Math.Pow((InitialPrice + Volatility.Value) / InitialPrice, 2)); // 2 3 4(saturday)
 
-            var jf3 = pricer.GetPriceOf(_instrument, D20190508);
+            var jf3 = pricer.GetPriceOf(Instrument, D20190508);
             Check.That(jf3.Value).IsEqualTo(InitialPrice * Math.Pow((InitialPrice + Volatility.Value) / InitialPrice, 4));
         }
 
@@ -102,9 +99,9 @@ namespace MiniPricerKata.Tests
 
             var date = new DateTime(2019, 5, day);
             var volatilityRandomizer = new VolatilityRandomizerForTesting();
-            var pricer = new MiniPricer2(new Price(mondayFerie, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer);
+            var pricer = new MiniPricer(new Price(mondayFerie, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer);
 
-            pricer.GetPriceOf(_instrument, date);
+            pricer.GetPriceOf(Instrument, date);
 
             Check.That(volatilityRandomizer.CalledTimes).IsEqualTo(randomrizeCalledTimes);
         }
@@ -116,9 +113,9 @@ namespace MiniPricerKata.Tests
 
             var date = D20190501;
             var volatilityRandomizer = new VolatilityRandomizerTestDecorator();
-            var pricer = new MiniPricer2(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer);
+            var pricer = new MiniPricer(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer);
 
-            pricer.GetPriceOf(_instrument, date.AddDays(1000));
+            pricer.GetPriceOf(Instrument, date.AddDays(1000));
 
             var volatilities = volatilityRandomizer.Volatilities.ToArray();
             Check.That(volatilities.All(v => Math.Abs(Math.Abs(v) - InitialPrice) < 0.000000001));
@@ -141,9 +138,9 @@ namespace MiniPricerKata.Tests
             Func<Volatility, Volatility> volatilityProducer = d => new Volatility(queue.Dequeue());
 
             var volatilityRandomizer = new MonteCarloVolatilityRandomizer(3, Volatility, volatilityProducer);
-            var pricer = new MiniPricer2(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer);
+            var pricer = new MiniPricer(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer);
 
-            var priceOfNextDate = pricer.GetPriceOf(_instrument, nextDate);
+            var priceOfNextDate = pricer.GetPriceOf(Instrument, nextDate);
 
             Check.That(priceOfNextDate).IsEqualTo(new Price(nextDate, 100 * (1 + (20d + 4 + 30) / 3 / 100)));
         }
@@ -166,9 +163,9 @@ namespace MiniPricerKata.Tests
 
             var monteCarlo = new MonteCarloVolatilityRandomizer(largeNumber, Volatility, producer);
 
-            var pricer = new MiniPricer2(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), monteCarlo);
+            var pricer = new MiniPricer(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), monteCarlo);
 
-            var priceOfNextDay = pricer.GetPriceOf(_instrument, nextDate);
+            var priceOfNextDay = pricer.GetPriceOf(Instrument, nextDate);
 
             Check.That(randomingCount).IsEqualTo(largeNumber);
             Check.That(priceOfNextDay.Date).IsEqualTo(nextDate);
@@ -204,7 +201,7 @@ namespace MiniPricerKata.Tests
             });
             var price = new Price(nextDate, 100 * (1 + (20d + 4 + 30) / 3 / 100));
 
-            var pricer = new MiniPricer2(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer, basket);
+            var pricer = new MiniPricer(new Price(date, InitialPrice), Volatility, new JoursFeriesProvider(), volatilityRandomizer, basket);
 
             BasketPriceComposition prices = pricer.GetPriceOf(nextDate, basket);
             Check.That(prices).HasSize(2);

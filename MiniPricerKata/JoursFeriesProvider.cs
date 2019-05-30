@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MiniPricerKata.Impl2
+namespace MiniPricerKata
 {
     public class JoursFeriesProvider : IProvideJoursFeries
     {
